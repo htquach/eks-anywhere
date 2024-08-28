@@ -1,0 +1,140 @@
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: Cluster
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/management-components-version: v0.20.4
+  name: workshop-demo
+  namespace: default
+spec:
+  clusterNetwork:
+    cniConfig:
+      cilium: {}
+    pods:
+      cidrBlocks:
+      - 192.168.0.0/16
+    services:
+      cidrBlocks:
+      - 10.96.0.0/12
+  controlPlaneConfiguration:
+    count: 2
+    endpoint:
+      host: 10.100.128.201
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: workshop-demo-cp
+    machineHealthCheck:
+      maxUnhealthy: 100%
+  datacenterRef:
+    kind: CloudStackDatacenterConfig
+    name: workshop-demo
+  eksaVersion: v0.20.4
+  externalEtcdConfiguration:
+    count: 3
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: workshop-demo-etcd
+  gitOpsRef:
+    kind: FluxConfig
+    name: workshop-demo-flux
+  kubernetesVersion: "1.28"
+  machineHealthCheck:
+    maxUnhealthy: 100%
+    nodeStartupTimeout: 10m0s
+    unhealthyMachineTimeout: 5m0s
+  managementCluster:
+    name: workshop-demo
+  workerNodeGroupConfigurations:
+  - count: 2
+    machineGroupRef:
+      kind: CloudStackMachineConfig
+      name: workshop-demo
+    machineHealthCheck:
+      maxUnhealthy: 40%
+    name: md-0
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackDatacenterConfig
+metadata:
+  name: workshop-demo
+  namespace: default
+spec:
+  availabilityZones:
+  - account: admin
+    credentialsRef: global
+    domain: ROOT
+    managementApiEndpoint: http://10.100.0.1:8080/client/api
+    name: az-1
+    zone:
+      name: Zone1
+      network:
+        name: SharedNet1
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/control-plane: "true"
+  name: workshop-demo-cp
+  namespace: default
+spec:
+  computeOffering:
+    name: Large Instance
+  template:
+    name: rhel8-kube-1.28-eksa
+  users:
+  - name: capc
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1GBW3tAe1h4XQc+QnqcLD8skUZQ0NvP3AwTKirlhVcGMPGKkre4an384YuTB8VIu5mE7BfNtO6q/n/w7i/KAoKrEwrSSA2J2jhxp5HgVi4r4KycYp11TpAUNn815uF2K2SzwVKamIgo4FjXROq3oCiViH72B9O1UOKgSSwNpnH22o7un9SDwjO4B5L8RZ/sT2DJCP/+DJ7pQ//mObvU0cv3K8t2+l/pz2eUBynvWC69XX2Z1aSkpk+hcgfFxTC3GUqhD9RfAK0FkZyfX8N4CjaxSvzCT98JBsWjp467TNgRRpZa1/ivLMVW0Ts5sIKQ1evy7y9Ni0oCHbJ6tCOs3mbtl2w9R60xNiUy6Jtci34YO2NcTkLJf7/L1dNFoP0YTeydHcqz1L6pTA8JkS0xGq4O54Nh0/vvLlgfv5oqFs0U+3tvHbxMoP6FO7sBCNsdYVItKsbvLKaQoIPUaJKzezPqOYZ8NIX65qNuYSxhhKgr+Dzk+ph7CMnYBWtObaK3cl36SDxPp7wC+Ed5bUim0S+koC0LQ+qurlezSceFsYWC9798iI1JbDxkzAnqo40ZUKD24wtn8AKw2O9EuaL9LW/sPKNzVRzZeXwT1D96qw8IaT0rkHXMRUkNvwrjQgTx+TL/abB7oJvPEq7vqUAKgriOgWf6Wn7TEPRnSIsXyKnQ==
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  name: workshop-demo
+  namespace: default
+spec:
+  computeOffering:
+    name: Large Instance
+  template:
+    name: rhel8-kube-1.28-eksa
+  users:
+  - name: capc
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1GBW3tAe1h4XQc+QnqcLD8skUZQ0NvP3AwTKirlhVcGMPGKkre4an384YuTB8VIu5mE7BfNtO6q/n/w7i/KAoKrEwrSSA2J2jhxp5HgVi4r4KycYp11TpAUNn815uF2K2SzwVKamIgo4FjXROq3oCiViH72B9O1UOKgSSwNpnH22o7un9SDwjO4B5L8RZ/sT2DJCP/+DJ7pQ//mObvU0cv3K8t2+l/pz2eUBynvWC69XX2Z1aSkpk+hcgfFxTC3GUqhD9RfAK0FkZyfX8N4CjaxSvzCT98JBsWjp467TNgRRpZa1/ivLMVW0Ts5sIKQ1evy7y9Ni0oCHbJ6tCOs3mbtl2w9R60xNiUy6Jtci34YO2NcTkLJf7/L1dNFoP0YTeydHcqz1L6pTA8JkS0xGq4O54Nh0/vvLlgfv5oqFs0U+3tvHbxMoP6FO7sBCNsdYVItKsbvLKaQoIPUaJKzezPqOYZ8NIX65qNuYSxhhKgr+Dzk+ph7CMnYBWtObaK3cl36SDxPp7wC+Ed5bUim0S+koC0LQ+qurlezSceFsYWC9798iI1JbDxkzAnqo40ZUKD24wtn8AKw2O9EuaL9LW/sPKNzVRzZeXwT1D96qw8IaT0rkHXMRUkNvwrjQgTx+TL/abB7oJvPEq7vqUAKgriOgWf6Wn7TEPRnSIsXyKnQ==
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: CloudStackMachineConfig
+metadata:
+  annotations:
+    anywhere.eks.amazonaws.com/etcd: "true"
+  name: workshop-demo-etcd
+  namespace: default
+spec:
+  computeOffering:
+    name: Large Instance
+  template:
+    name: rhel8-kube-1.28-eksa
+  users:
+  - name: capc
+    sshAuthorizedKeys:
+    - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQC1GBW3tAe1h4XQc+QnqcLD8skUZQ0NvP3AwTKirlhVcGMPGKkre4an384YuTB8VIu5mE7BfNtO6q/n/w7i/KAoKrEwrSSA2J2jhxp5HgVi4r4KycYp11TpAUNn815uF2K2SzwVKamIgo4FjXROq3oCiViH72B9O1UOKgSSwNpnH22o7un9SDwjO4B5L8RZ/sT2DJCP/+DJ7pQ//mObvU0cv3K8t2+l/pz2eUBynvWC69XX2Z1aSkpk+hcgfFxTC3GUqhD9RfAK0FkZyfX8N4CjaxSvzCT98JBsWjp467TNgRRpZa1/ivLMVW0Ts5sIKQ1evy7y9Ni0oCHbJ6tCOs3mbtl2w9R60xNiUy6Jtci34YO2NcTkLJf7/L1dNFoP0YTeydHcqz1L6pTA8JkS0xGq4O54Nh0/vvLlgfv5oqFs0U+3tvHbxMoP6FO7sBCNsdYVItKsbvLKaQoIPUaJKzezPqOYZ8NIX65qNuYSxhhKgr+Dzk+ph7CMnYBWtObaK3cl36SDxPp7wC+Ed5bUim0S+koC0LQ+qurlezSceFsYWC9798iI1JbDxkzAnqo40ZUKD24wtn8AKw2O9EuaL9LW/sPKNzVRzZeXwT1D96qw8IaT0rkHXMRUkNvwrjQgTx+TL/abB7oJvPEq7vqUAKgriOgWf6Wn7TEPRnSIsXyKnQ==
+
+---
+apiVersion: anywhere.eks.amazonaws.com/v1alpha1
+kind: FluxConfig
+metadata:
+  name: workshop-demo-flux
+  namespace: default
+spec:
+  branch: main
+  clusterConfigPath: clusters/workshop-demo
+  github:
+    owner: htquach
+    personal: true
+    repository: eks-anywhere
+  systemNamespace: flux-system
+
+---
