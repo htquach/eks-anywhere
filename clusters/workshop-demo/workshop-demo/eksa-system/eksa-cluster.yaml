@@ -44,7 +44,7 @@ spec:
   managementCluster:
     name: workshop-demo
   workerNodeGroupConfigurations:
-  - count: 5
+  - count: 2
     machineGroupRef:
       kind: CloudStackMachineConfig
       name: workshop-demo
